@@ -36,3 +36,8 @@ QUALITY_GATES = {
     "mrr": 0.60,
     "ndcg": 0.65,
 }
+
+# HuggingFace token (free)
+HF_TOKEN = os.getenv("HF_TOKEN")
+if HF_TOKEN:
+    os.environ["HUGGINGFACEHUB_API_TOKEN"] = HF_TOKEN

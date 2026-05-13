@@ -20,4 +20,11 @@ ragas
 rank-bm25
 mlflow
 streamlit
+langchain-text-splitters
+langchain-experimental
+langchain-huggingface
+langchain-unstructured
+unstructured-client
+unstructured[all-docs]
+unstructured-inference
 -e .
