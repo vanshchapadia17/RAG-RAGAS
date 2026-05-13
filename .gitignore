@@ -147,6 +147,12 @@ activemq-data/
 # SageMath parsed files
 *.sage.py
 
+# Ignore all files in the uploads folder
+logs/*
+
+# But do NOT ignore the .gitkeep file
+!logs/.gitkeep
+
 # Environments
 .env
 .envrc
