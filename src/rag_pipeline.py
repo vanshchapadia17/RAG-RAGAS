@@ -81,3 +81,20 @@ def query_with_sources(retriever, question: str) -> Dict[str, Any]:
         "num_chunks_retrieved": len(docs)
     }
 
+
+
+
+
+
+from src.vectorstore import load_vectorstore
+from src.retriever import get_retriever
+from src.rag_pipeline import query_with_sources
+
+vs = load_vectorstore()
+retriever = get_retriever('basic', vs)
+
+result = query_with_sources(retriever, 'What is artificial intelligence?')
+print('Answer:', result['answer'])
+print('Chunks used:', result['num_chunks_retrieved'])
+for s in result['sources']:
+    print('Page:', s['page'])
