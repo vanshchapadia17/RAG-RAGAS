@@ -27,4 +27,5 @@ langchain-unstructured
 unstructured-client
 unstructured[all-docs]
 unstructured-inference
+langchain-classic
 -e .

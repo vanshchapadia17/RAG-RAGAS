@@ -17,19 +17,20 @@ to merge BM25 + vector results.
 """
 
 
-import os 
+import os
 from typing import List
-from langchain_core.documents import Document # type: ignore
-from langchain_community.vectorstores import FAISS # type: ignore
-from langchain.retrievers import EnsembleRetriever, ContextualCompressionRetriever # type: ignore
-from langchain.retrievers.document_compressors import CrossEncoderReranker # type: ignore
+from langchain_core.documents import Document
+from langchain_community.vectorstores import FAISS
 from langchain_community.retrievers import BM25Retriever
-from langchain_community.cross_encoders import HuggingFaceCrossEncoder
-from langchain.retrievers.multi_query import MultiQueryRetriever # type: ignore
+from langchain_classic.retrievers.ensemble import EnsembleRetriever # type: ignore
+from langchain_classic.retrievers import ContextualCompressionRetriever # type: ignore
+from langchain_classic.retrievers.parent_document_retriever import ParentDocumentRetriever # type: ignore
+from langchain_classic.retrievers.multi_query import MultiQueryRetriever # type: ignore
+from langchain_classic.retrievers.document_compressors.cross_encoder_rerank import CrossEncoderReranker # type: ignore
+from langchain_community.cross_encoders.huggingface import HuggingFaceCrossEncoder
 from langchain_groq import ChatGroq
-from langchain.storage import InMemoryStore # type: ignore
-from langchain.retrievers import ParentDocumentRetriever # type: ignore
-from langchain.text_splitter import RecursiveCharacterTextSplitter # type: ignore
+from langchain_core.stores import InMemoryStore # type: ignore
+from langchain_text_splitters import RecursiveCharacterTextSplitter # type: ignore
 from src.config import (
     TOP_K, RERANK_TOP_N, BM25_WEIGHT, VECTOR_WEIGHT,
     RERANKER_MODEL, LLM_MODEL, CHUNK_SIZE, CHILD_CHUNK_SIZE
