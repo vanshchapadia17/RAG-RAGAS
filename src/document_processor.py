@@ -37,6 +37,7 @@ def load_documents(data_dir: str = DATA_DIR) -> List[Document]:
     docs= loader.load()
     print(f"loaded {len(docs)} pages")
     return docs
+
 '''
 def load_single_pdf(pdf_path: str) -> List[Document]:
     loader = PyMuPDFLoader(pdf_path)
@@ -91,21 +92,6 @@ def child_chunking(docs: List[Document]) -> List[Document]:
         chunk.metadata["chunk_index"] = i
     print(f"Child chunking: {len(chunks)} chunks")
     return chunks
-
-"""
-def document_aware_chunking(pdf_path: str) -> List[Document]:
-    loader = UnstructuredPDFLoader(
-        pdf_path,
-        mode="elements",        # splits by detected elements
-        strategy="auto"       # detects headers, tables, lists
-    )
-    docs = loader.load()
-    for i, doc in enumerate(docs):
-        doc.metadata["chunk_strategy"] = "document_aware"
-        doc.metadata["chunk_index"] = i
-    print(f"Document-aware chunking: {len(docs)} chunks")
-    return docs
-"""
     
 def semantic_chunking(docs: List[Document]) -> List[Document]:
     embeddings = HuggingFaceEmbeddings(
@@ -124,6 +110,22 @@ def semantic_chunking(docs: List[Document]) -> List[Document]:
     return chunks
 
 
+"""
+def document_aware_chunking(pdf_path: str) -> List[Document]:
+    loader = UnstructuredPDFLoader(
+        pdf_path,
+        mode="elements",        # splits by detected elements
+        strategy="auto"       # detects headers, tables, lists
+    )
+    docs = loader.load()
+    for i, doc in enumerate(docs):
+        doc.metadata["chunk_strategy"] = "document_aware"
+        doc.metadata["chunk_index"] = i
+    print(f"Document-aware chunking: {len(docs)} chunks")
+    return docs
+"""
+
+"""
 
 docs = load_documents()
 small = docs[310:315]
@@ -157,11 +159,10 @@ print()
 print('=== Child chunk 1 ===')  
 print(c_chunks[0].page_content[:])
 
-"""
 print()
 print('=== Document-Aware chunk 1 ===')
 print(d_chunks[0].page_content[:])
-"""
+
 
 print()
 print(f'Recursive avg length: {sum(len(c.page_content) for c in r_chunks) // len(r_chunks)} chars')
@@ -169,3 +170,5 @@ print(f'Semantic avg length:  {sum(len(c.page_content) for c in s_chunks) // len
 print(f'Fixed Size avg length: {sum(len(c.page_content) for c in f_chunks) // len(f_chunks)} chars')
 print(f'Child avg length: {sum(len(c.page_content) for c in c_chunks) // len(c_chunks)} chars')
 #print(f'Document-Aware avg length: {sum(len(c.page_content) for c in d_chunks) // len(d_chunks)} chars')    
+
+"""

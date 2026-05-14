@@ -19,6 +19,13 @@ RERANK_TOP_N = 5
 BM25_WEIGHT = 0.5
 VECTOR_WEIGHT = 0.5
 
+"""
+Your document type         Best weights
+Technical docs, code       BM25=0.7, Vector=0.3
+Conceptual, narrative      BM25=0.3, Vector=0.7
+Mixed (like AI textbook)   BM25=0.5, Vector=0.5
+"""
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(BASE_DIR, "data")
 EVAL_DIR = os.path.join(BASE_DIR, "eval")
