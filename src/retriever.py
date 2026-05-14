@@ -1,5 +1,5 @@
 """
-in thi sfile we have comparing diff retrieval startegies, including:
+in this file we have comparing diff retrieval startegies, including:
 - Basic Vector Search 
 - BM25 Keyword Search
 - Hybrid BM25 + Vector
@@ -9,7 +9,7 @@ in thi sfile we have comparing diff retrieval startegies, including:
 - MMR (Maximal Marginal Relevance)
 - Parent Document Retriever (small child chunks, returns large parent chunks)
 
-so after user write question in convert those question first in vectores 
+so after user write question it convert those question first in vectores 
 and return most relevenat chunks with using these 8 strategies 
 
 RRF is not a separate retriever — it is the algorithm used inside EnsembleRetriever 
@@ -35,7 +35,7 @@ from src.config import (
     RERANKER_MODEL, LLM_MODEL, CHUNK_SIZE, CHILD_CHUNK_SIZE
 )
 
-def get_basic_retriever(vectorstore: FAISS, k: int = RERANK_TOP_N):
+def get_basic_retriever(vectorstore: FAISS, k: int = RERANK_TOP_N): #value of top n is 5 
     """
     Simple cosine similarity search.
     Use as Experiment 1 baseline.
@@ -101,8 +101,8 @@ def get_reranker_on_vector(
     compressor = CrossEncoderReranker(model=model, top_n=top_n)
 
     return ContextualCompressionRetriever(
-        base_compressor=compressor,
-        base_retriever=base_retriever
+        base_retriever=base_retriever,
+        base_compressor=compressor
     )
 
 def get_reranker_on_hybrid(
