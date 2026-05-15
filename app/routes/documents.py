@@ -2,8 +2,13 @@ import os
 from flask import Blueprint, render_template, request, jsonify
 from werkzeug.utils import secure_filename
 from src.document_processor import load_single_pdf, recursive_chunking
-from src.vectorstore import build_vectorstore, load_vectorstore, get_vectorstore_stats
-from src.config import DATA_DIR
+from src.vectorstore import (
+    build_vectorstore,
+    load_vectorstore,
+    get_vectorstore_stats,
+    add_documents,
+)
+from src.config import DATA_DIR, FAISS_DIR
 
 documents_bp = Blueprint("documents", __name__)
 
@@ -33,7 +38,16 @@ def upload_document():
     try:
         docs = load_single_pdf(save_path)
         chunks = recursive_chunking(docs)
-        vs = build_vectorstore(chunks)
+
+        # Append to the existing index so previously indexed PDFs are kept.
+        # Only build a fresh index when none exists yet.
+        index_exists = os.path.exists(os.path.join(FAISS_DIR, "index.faiss"))
+        if index_exists:
+            vs = load_vectorstore()
+            vs = add_documents(vs, chunks)
+        else:
+            vs = build_vectorstore(chunks)
+
         stats = get_vectorstore_stats(vs)
 
         return jsonify({

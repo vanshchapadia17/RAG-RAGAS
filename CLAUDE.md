@@ -104,12 +104,6 @@ These are real inconsistencies — be aware of them, and fix only when asked:
 - **Dashboard eval only supports some retrievers.** `app/routes/eval.py` calls
   `get_retriever(strategy, vs)` without `all_chunks`/`all_docs`, so `hybrid`,
   `bm25`, `reranker_hybrid`, and `parent` will fail from the UI.
-- **PDF upload replaces the index.** `app/routes/documents.py::upload_document`
-  calls `build_vectorstore()`, which overwrites the whole FAISS index instead of
-  appending; `vectorstore.py::add_documents()` is the append path.
-- **`mrr`/`ndcg` quality gates are skipped.** `QUALITY_GATES` lists them, but
-  `run_ragas_evaluation` only writes RAGAS metrics to `ragas_scores.json`, so
-  `quality_gate.py` never checks them.
 - `semantic_chunking` still uses local `HuggingFaceEmbeddings` (large download),
   unlike the rest of the pipeline which uses the HF Inference endpoint.
 

@@ -38,6 +38,17 @@ def extract_score(value) -> float:
         return round(float(sum(value) / len(value)), 4)
     return round(float(value), 4)
 
+def save_scores(scores: Dict) -> None:
+    """Persist the full metric set (RAGAS + retriever metrics) to SCORES_FILE.
+
+    quality_gate.py reads this file, so every gated metric — including mrr and
+    ndcg — must be written here, not just the RAGAS scores.
+    """
+    os.makedirs(os.path.dirname(SCORES_FILE), exist_ok=True)
+    with open(SCORES_FILE, "w") as f:
+        json.dump(scores, f, indent=2)
+    print(f"All scores saved to {SCORES_FILE}")
+
 def build_eval_data(
     questions: List[str],
     retriever,

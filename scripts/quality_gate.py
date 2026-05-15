@@ -22,6 +22,7 @@ def run_quality_gate():
     failed = []
     for metric, threshold in QUALITY_GATES.items():
         if metric not in scores:
+            print(f"  [SKIP   ] {metric}: not found in scores file")
             continue
 
         score = scores[metric]

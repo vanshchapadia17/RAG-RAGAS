@@ -117,10 +117,16 @@ def run_all_retriever_metrics(
 
     metrics = {"mrr": mrr, **pr_metrics}
 
-    if graded_relevance:
-        print("Computing NDCG@5...")
-        ndcg = compute_ndcg(queries, retriever, graded_relevance, k=5)
-        metrics["ndcg@5"] = ndcg
+    # NDCG needs graded relevance. When the caller supplies no explicit grades,
+    # fall back to binary relevance (each keyword counts as grade 1) so NDCG —
+    # and its quality gate — is always evaluated. The key is "ndcg" (no "@5")
+    # to match the QUALITY_GATES config.
+    if not graded_relevance:
+        graded_relevance = [
+            [(kw, 1) for kw in keywords] for keywords in relevant_keywords
+        ]
+    print("Computing NDCG@5...")
+    metrics["ndcg"] = compute_ndcg(queries, retriever, graded_relevance, k=5)
 
     print("\n── Retriever Metrics ──")
     for k, v in metrics.items():

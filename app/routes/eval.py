@@ -4,7 +4,7 @@ from flask import Blueprint, render_template, request, jsonify
 from src.vectorstore import load_vectorstore
 from src.retriever import get_retriever
 from src.rag_pipeline import build_rag_chain
-from src.evaluator import build_eval_data, run_ragas_evaluation
+from src.evaluator import build_eval_data, run_ragas_evaluation, save_scores
 from src.metrics import run_all_retriever_metrics
 from src.experiment_tracker import log_experiment, check_quality_gates
 from src.config import SCORES_FILE
@@ -54,6 +54,8 @@ def run_eval():
         log_experiment(run_name, config, ragas_scores, retriever_metrics)
 
         all_scores = {**ragas_scores, **retriever_metrics}
+        # Persist the combined set so quality_gate.py can check mrr/ndcg too.
+        save_scores(all_scores)
         gates = check_quality_gates(all_scores)
 
         return jsonify({
