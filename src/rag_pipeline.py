@@ -85,7 +85,7 @@ def query_with_sources(retriever, question: str) -> Dict[str, Any]:
 
 
 
-
+"""
 from src.vectorstore import load_vectorstore
 from src.retriever import get_retriever
 from src.rag_pipeline import query_with_sources
@@ -98,3 +98,4 @@ print('Answer:', result['answer'])
 print('Chunks used:', result['num_chunks_retrieved'])
 for s in result['sources']:
     print('Page:', s['page'])
+"""

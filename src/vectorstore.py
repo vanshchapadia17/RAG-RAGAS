@@ -6,17 +6,22 @@ and these numbers captures the meaning of text , same context of text equals to 
 import os 
 from typing import List 
 from langchain_community.vectorstores import FAISS # type: ignore
-from langchain_huggingface import HuggingFaceEmbeddings # type: ignore
+from langchain_huggingface.embeddings.huggingface_endpoint import HuggingFaceEndpointEmbeddings # type: ignore
 from langchain_core.documents import Document # type: ignore
 from src.config import FAISS_DIR, EMBEDDING_MODEL
 from src.document_processor import recursive_chunking, load_documents
+from src.config import HF_TOKEN
 
 #this function loads the embedding model from huggingface
-def get_embeddings() -> HuggingFaceEmbeddings:
-    return HuggingFaceEmbeddings(
-        model_name=EMBEDDING_MODEL,
-        model_kwargs={"device":"cpu"},
-        encode_kwargs={"normalize_embeddings":True}
+def get_embeddings() -> HuggingFaceEndpointEmbeddings:
+    """
+    endpoint gice you access to work on any server without gpu 
+    """
+    return HuggingFaceEndpointEmbeddings(
+        model="sentence-transformers/all-MiniLM-L6-v2",
+        huggingfacehub_api_token=HF_TOKEN
+        #model_kwargs={"device":"cpu"},
+        #encode_kwargs={"normalize_embeddings":True}
         )
 
 #this function builds the vectorstore using FAISS and saves it locally
@@ -88,4 +93,13 @@ for i, r in enumerate(results):
     print(r.page_content[:200])
     print('Page:', r.metadata['page'])
     print('---')
+"""
+"""
+from src.document_processor import load_documents, recursive_chunking
+from src.vectorstore import build_vectorstore
+
+docs = load_documents()
+chunks = recursive_chunking(docs)
+vs = build_vectorstore(chunks)
+print('Done! Total vectors:', vs.index.ntotal)
 """
