@@ -1,0 +1,14 @@
+artifact_uri: file:///C:/Users/DELL/Desktop/RAG/mlruns/837932735578784208/1cee9ae75bc14d44a8eb76b02d3418b6/artifacts
+end_time: 1778844739806
+entry_point_name: ''
+experiment_id: '837932735578784208'
+lifecycle_stage: active
+run_id: 1cee9ae75bc14d44a8eb76b02d3418b6
+run_name: exp1-basic-baseline
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1778844739720
+status: 4
+tags: []
+user_id: DELL
