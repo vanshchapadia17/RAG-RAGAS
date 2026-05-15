@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Experiments — RAG Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>Experiments</h1>
+  <p class="subtitle">Compare all MLflow experiment runs side by side</p>
+</div>
+
+<div class="card">
+  <div id="exp-table-wrap">
+    <p class="loading-text">Loading experiments...</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const METRIC_KEYS = [
+  'ragas_faithfulness',
+  'ragas_answer_relevancy',
+  'ragas_context_precision',
+  'ragas_context_recall',
+  'ragas_answer_correctness',
+  'mrr',
+  'ndcg_at_5'
+];
+
+const METRIC_LABELS = [
+  'Faithfulness',
+  'Ans Relevancy',
+  'Ctx Precision',
+  'Ctx Recall',
+  'Ans Correctness',
+  'MRR',
+  'NDCG@5'
+];
+
+fetch('/api/experiments')
+  .then(r => r.json())
+  .then(data => {
+    const wrap = document.getElementById('exp-table-wrap');
+    if (!data.length) {
+      wrap.innerHTML = '<p class="empty-text">No experiments yet. Run an evaluation first.</p>';
+      return;
+    }
+
+    const rows = data.map(run => {
+      const cells = METRIC_KEYS.map(k => {
+        const v = run[k];
+        if (v === undefined || v === '') return '<td>—</td>';
+        const num = parseFloat(v);
+        const cls = num >= 0.75 ? 'good' : num >= 0.50 ? 'mid' : 'bad';
+        return `<td class="${cls}">${num.toFixed(3)}</td>`;
+      }).join('');
+
+      return `<tr>
+        <td class="run-name">${run.run_name || '—'}</td>
+        <td>${run.start_time ? run.start_time.substring(0,19) : '—'}</td>
+        <td>${run.param_retriever_strategy || '—'}</td>
+        ${cells}
+      </tr>`;
+    }).join('');
+
+    wrap.innerHTML = `
+      <div class="table-scroll">
+        <table class="exp-table">
+          <thead>
+            <tr>
+              <th>Run Name</th>
+              <th>Date</th>
+              <th>Retriever</th>
+              ${METRIC_LABELS.map(l => `<th>${l}</th>`).join('')}
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+  });
+</script>
+{% endblock %}

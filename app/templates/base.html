@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}RAG Dashboard{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+</head>
+<body>
+
+  <nav class="sidebar">
+    <div class="logo">
+      <span class="logo-rag">RAG</span>
+      <span class="logo-eval">Eval</span>
+    </div>
+    <ul class="nav-links">
+      <li>
+        <a href="/" class="{% if request.path == '/' %}active{% endif %}">
+          <span class="nav-icon">💬</span>
+          <span>Chat</span>
+        </a>
+      </li>
+      <li>
+        <a href="/documents" class="{% if request.path == '/documents' %}active{% endif %}">
+          <span class="nav-icon">📄</span>
+          <span>Documents</span>
+        </a>
+      </li>
+      <li>
+        <a href="/eval" class="{% if request.path == '/eval' %}active{% endif %}">
+          <span class="nav-icon">📊</span>
+          <span>Evaluate</span>
+        </a>
+      </li>
+      <li>
+        <a href="/experiments" class="{% if request.path == '/experiments' %}active{% endif %}">
+          <span class="nav-icon">🧪</span>
+          <span>Experiments</span>
+        </a>
+      </li>
+    </ul>
+    <div class="sidebar-footer">
+      <span>RAG Evaluation System</span>
+    </div>
+  </nav>
+
+  <main class="main-content">
+    <div class="page-wrapper">
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  {% block scripts %}{% endblock %}
+
+</body>
+</html>

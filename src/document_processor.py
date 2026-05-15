@@ -38,15 +38,13 @@ def load_documents(data_dir: str = DATA_DIR) -> List[Document]:
     print(f"loaded {len(docs)} pages")
     return docs
 
-'''
+
 def load_single_pdf(pdf_path: str) -> List[Document]:
     loader = PyMuPDFLoader(pdf_path)
     docs = loader.load()
     print(f"loaded {len(docs)} pages from {pdf_path}")
     return docs
 
-    (used when u have to load just only one pdf file)
-'''
 
 # load_documents()
 # load_single_pdf("C:\\Users\\DELL\\Desktop\\RAG\\data\\AI.pdf") used only for one pdf file loading.

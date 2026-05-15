@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block title %}Chat — RAG Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>Document Q&A</h1>
+  <p class="subtitle">Ask questions about your indexed documents</p>
+</div>
+
+<div class="chat-wrapper">
+  <div class="chat-box" id="chat-box">
+    <div class="message bot">
+      <div class="msg-bubble">
+        Hello! Ask me anything about your documents.
+      </div>
+    </div>
+  </div>
+
+  <div class="chat-input-area">
+    <input
+      type="text"
+      id="question-input"
+      placeholder="Ask a question about your documents..."
+      autocomplete="off"
+    />
+    <button id="send-btn" onclick="sendMessage()">Send</button>
+  </div>
+</div>
+
+<div class="sources-panel" id="sources-panel" style="display:none">
+  <h3>Retrieved Chunks</h3>
+  <div id="sources-list"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function sendMessage() {
+  const input = document.getElementById('question-input');
+  const question = input.value.trim();
+  if (!question) return;
+
+  appendMessage(question, 'user');
+  input.value = '';
+
+  const loadingId = appendLoading();
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({question})
+    });
+    const data = await res.json();
+    removeLoading(loadingId);
+
+    if (data.error) {
+      appendMessage('Error: ' + data.error, 'bot');
+    } else {
+      appendBotMessage(data.answer, question);
+      showSources(data.sources);
+    }
+  } catch(e) {
+    removeLoading(loadingId);
+    appendMessage('Network error. Please try again.', 'bot');
+  }
+}
+
+function appendMessage(text, type) {
+  const box = document.getElementById('chat-box');
+  const div = document.createElement('div');
+  div.className = `message ${type}`;
+  div.innerHTML = `<div class="msg-bubble">${text}</div>`;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+
+function appendBotMessage(text, question) {
+  const box = document.getElementById('chat-box');
+  const id = 'msg-' + Date.now();
+  const div = document.createElement('div');
+  div.className = 'message bot';
+  div.id = id;
+  div.innerHTML = `
+    <div class="msg-bubble">${text}</div>
+    <div class="feedback-row">
+      <span class="feedback-label">Was this helpful?</span>
+      <button class="fb-btn" onclick="sendFeedback('${question.replace(/'/g,"\\'")}', '${text.substring(0,100).replace(/'/g,"\\'")}', 'up', this)">👍</button>
+      <button class="fb-btn" onclick="sendFeedback('${question.replace(/'/g,"\\'")}', '${text.substring(0,100).replace(/'/g,"\\'")}', 'down', this)">👎</button>
+    </div>`;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+
+function appendLoading() {
+  const box = document.getElementById('chat-box');
+  const id = 'loading-' + Date.now();
+  const div = document.createElement('div');
+  div.className = 'message bot';
+  div.id = id;
+  div.innerHTML = `<div class="msg-bubble loading-bubble">Thinking...</div>`;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+  return id;
+}
+
+function removeLoading(id) {
+  const el = document.getElementById(id);
+  if (el) el.remove();
+}
+
+function showSources(sources) {
+  const panel = document.getElementById('sources-panel');
+  const list = document.getElementById('sources-list');
+  panel.style.display = 'block';
+  list.innerHTML = sources.map((s, i) => `
+    <div class="source-card">
+      <div class="source-header">
+        Chunk ${i+1} &nbsp;·&nbsp; Page ${s.page}
+      </div>
+      <div class="source-text">${s.content}</div>
+    </div>
+  `).join('');
+}
+
+async function sendFeedback(question, answer, rating, btn) {
+  await fetch('/api/feedback', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({question, answer, rating})
+  });
+  btn.parentElement.innerHTML = '<span class="fb-saved">✓ Feedback saved</span>';
+}
+
+document.getElementById('question-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') sendMessage();
+});
+</script>
+{% endblock %}

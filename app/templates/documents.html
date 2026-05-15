@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Documents — RAG Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>Documents</h1>
+  <p class="subtitle">Upload PDFs and manage your knowledge base</p>
+</div>
+
+<div class="card upload-card">
+  <h3>Upload a PDF</h3>
+  <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+    <div class="drop-icon">📄</div>
+    <p>Drag & drop a PDF here or click to browse</p>
+    <input type="file" id="file-input" accept=".pdf" style="display:none" onchange="uploadFile(this.files[0])"/>
+    <button class="secondary-btn" onclick="event.stopPropagation(); document.getElementById('file-input').click()">
+      Choose File
+    </button>
+  </div>
+  <div id="upload-status" class="status-msg"></div>
+</div>
+
+<div class="card">
+  <h3>Indexed Documents ({{ pdfs|length }} files)</h3>
+  {% if pdfs %}
+  <ul class="doc-list">
+    {% for pdf in pdfs %}
+    <li class="doc-item">
+      <span class="doc-icon">📄</span>
+      <span class="doc-name">{{ pdf }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="empty-text">No documents indexed yet. Upload a PDF to get started.</p>
+  {% endif %}
+</div>
+
+<div class="card" id="stats-card">
+  <h3>Vector Store Stats</h3>
+  <div id="stats-content">
+    <p class="loading-text">Loading stats...</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function uploadFile(file) {
+  if (!file) return;
+  const status = document.getElementById('upload-status');
+  showUploadStatus(`Uploading and indexing ${file.name}...`, 'info');
+
+  const form = new FormData();
+  form.append('file', file);
+
+  try {
+    const res = await fetch('/api/upload', {method:'POST', body: form});
+    const data = await res.json();
+    if (data.error) {
+      showUploadStatus('Error: ' + data.error, 'error');
+    } else {
+      showUploadStatus(`✓ ${data.message} — ${data.chunks} chunks indexed.`, 'success');
+      setTimeout(() => location.reload(), 1500);
+    }
+  } catch(e) {
+    showUploadStatus('Upload failed: ' + e.message, 'error');
+  }
+}
+
+function showUploadStatus(msg, type) {
+  const el = document.getElementById('upload-status');
+  el.textContent = msg;
+  el.className = 'status-msg ' + type;
+  el.style.display = 'block';
+}
+
+fetch('/api/index-stats')
+  .then(r => r.json())
+  .then(data => {
+    document.getElementById('stats-content').innerHTML = `
+      <div class="stats-row">
+        <div class="stat-item">
+          <div class="stat-num">${data.total_chunks}</div>
+          <div class="stat-label">Total Chunks</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">${data.index_type || 'FAISS'}</div>
+          <div class="stat-label">Index Type</div>
+        </div>
+      </div>`;
+  });
+
+const dz = document.getElementById('drop-zone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+dz.addEventListener('drop', e => {
+  e.preventDefault();
+  dz.classList.remove('dragover');
+  uploadFile(e.dataTransfer.files[0]);
+});
+</script>
+{% endblock %}

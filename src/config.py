@@ -44,6 +44,9 @@ QUALITY_GATES = {
     "ndcg": 0.65,
 }
 
+# Flask
+FLASK_SECRET_KEY = os.getenv("FLASK_SECRET_KEY", "dev-secret-key-change-in-production")
+
 # HuggingFace token (free)
 HF_TOKEN = os.getenv("HF_TOKEN")
 if HF_TOKEN:

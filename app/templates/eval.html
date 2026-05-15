@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}Evaluate — RAG Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>Evaluation</h1>
+  <p class="subtitle">Run RAGAS + MRR + NDCG on your RAG pipeline</p>
+</div>
+
+<div class="metrics-grid">
+  {% set metric_list = [
+    ("faithfulness", "Faithfulness", "No hallucination", 0.80),
+    ("answer_relevancy", "Answer Relevancy", "On-topic answers", 0.75),
+    ("context_precision", "Context Precision", "No noisy chunks", 0.70),
+    ("context_recall", "Context Recall", "All chunks retrieved", 0.70),
+    ("answer_correctness", "Answer Correctness", "Factually correct", 0.65),
+  ] %}
+
+  {% for key, label, desc, threshold in metric_list %}
+  {% set score = scores.get(key, 0) %}
+  <div class="metric-card {% if score >= threshold %}pass{% elif score > 0 %}fail{% endif %}">
+    <div class="metric-label">{{ label }}</div>
+    <div class="metric-score">{{ "%.2f"|format(score) }}</div>
+    <div class="metric-desc">{{ desc }}</div>
+    <div class="metric-bar-wrap">
+      <div class="metric-bar-fill" style="width: {{ ((score * 100)|int) }}%"></div>
+    </div>
+    <div class="metric-threshold">Gate: {{ threshold }}</div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="card eval-form">
+  <h3>Run New Evaluation</h3>
+
+  <div class="form-group">
+    <label>Retriever Strategy</label>
+    <select id="retriever-select">
+      <option value="basic">Basic — vector search (baseline)</option>
+      <option value="bm25">BM25 — keyword search</option>
+      <option value="hybrid">Hybrid — BM25 + vector</option>
+      <option value="reranker_vector">Reranker Vector — vector + BGE reranker</option>
+      <option value="reranker_hybrid" selected>Reranker Hybrid — best quality</option>
+      <option value="mmr">MMR — diverse results</option>
+      <option value="multiquery">Multi-query — multiple phrasings</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label>Run Name</label>
+    <input type="text" id="run-name" placeholder="e.g. exp2-reranker-hybrid"/>
+  </div>
+
+  <div class="form-group">
+    <label>Questions (one per line)</label>
+    <textarea id="questions-input" rows="5" placeholder="What is artificial intelligence?&#10;What is machine learning?&#10;What is a search algorithm?"></textarea>
+  </div>
+
+  <div class="form-group">
+    <label>Ground Truths (one per line, same order as questions)</label>
+    <textarea id="truths-input" rows="5" placeholder="AI is the study of intelligent agents&#10;ML is a subset of AI&#10;A search algorithm explores possible states"></textarea>
+  </div>
+
+  <button class="primary-btn" onclick="runEval()">Run Evaluation</button>
+  <div id="eval-status" class="status-msg"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function runEval() {
+  const questions = document.getElementById('questions-input').value
+    .split('\n').map(q => q.trim()).filter(q => q);
+  const ground_truths = document.getElementById('truths-input').value
+    .split('\n').map(q => q.trim()).filter(q => q);
+  const retriever = document.getElementById('retriever-select').value;
+  const run_name = document.getElementById('run-name').value || `eval-${retriever}`;
+
+  if (!questions.length) {
+    showStatus('Please enter at least one question', 'error');
+    return;
+  }
+
+  showStatus('Running evaluation... this may take a few minutes.', 'info');
+
+  try {
+    const res = await fetch('/api/run-eval', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        questions,
+        ground_truths: ground_truths.length ? ground_truths : null,
+        retriever,
+        run_name
+      })
+    });
+    const data = await res.json();
+
+    if (data.error) {
+      showStatus('Error: ' + data.error, 'error');
+      return;
+    }
+
+    const passed = data.quality_gates.all_passed;
+    const msg = passed
+      ? '✓ All quality gates passed! Logged to MLflow.'
+      : '✗ Some gates failed: ' + data.quality_gates.failed.join(', ');
+
+    showStatus(msg, passed ? 'success' : 'error');
+    setTimeout(() => location.reload(), 2000);
+
+  } catch(e) {
+    showStatus('Network error: ' + e.message, 'error');
+  }
+}
+
+function showStatus(msg, type) {
+  const el = document.getElementById('eval-status');
+  el.textContent = msg;
+  el.className = 'status-msg ' + type;
+  el.style.display = 'block';
+}
+</script>
+{% endblock %}
