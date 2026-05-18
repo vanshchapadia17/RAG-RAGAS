@@ -1,6 +1,6 @@
 import json
 import os
-from unittest import result
+from ragas.executor import RunConfig
 from unittest import result
 import pandas as pd
 from typing import List, Dict
@@ -165,6 +165,63 @@ def analyze_failures(
     return worst
 
 
+def generate_eval_dataset(
+    docs,
+    test_size: int = 10,
+    save: bool = True
+) -> pd.DataFrame:
+    """
+    Auto generate evaluation dataset from your documents.
+    No manual question writing needed!
+    """
+    from ragas.testset import TestsetGenerator
+    from ragas.testset.synthesizers import (
+        SingleHopSpecificQuerySynthesizer,
+        MultiHopAbstractQuerySynthesizer,
+        MultiHopSpecificQuerySynthesizer
+    )
+    from langchain_groq import ChatGroq
+    from langchain_huggingface import HuggingFaceEndpointEmbeddings
+    from src.config import HF_TOKEN, LLM_MODEL, DATASET_FILE ,EVAL_DIR
+
+    print(f"Generating {test_size} questions from your documents...")
+
+    llm = ChatGroq(model=LLM_MODEL, temperature=0)
+    embeddings = HuggingFaceEndpointEmbeddings(
+        model="sentence-transformers/all-MiniLM-L6-v2",
+        huggingfacehub_api_token=HF_TOKEN
+    )
+
+    generator = TestsetGenerator(
+        llm=llm,
+        embedding_model=embeddings
+    )
+
+    testset = generator.generate_with_langchain_docs(
+        documents=docs,
+        testset_size=5,
+        query_distribution=[
+        (SingleHopSpecificQuerySynthesizer(llm=llm), 0.5),
+        (MultiHopAbstractQuerySynthesizer(llm=llm), 0.25),
+        (MultiHopSpecificQuerySynthesizer(llm=llm), 0.25)
+        ],
+        run_config=RunConfig(
+        max_retries=10,
+        max_wait=120,
+        timeout=600
+        ),
+        raise_exceptions=False
+    )
+
+    df = testset.to_pandas()
+
+    if save:
+        os.makedirs(EVAL_DIR, exist_ok=True)
+        df.to_csv(DATASET_FILE, index=False)
+        print(f"Dataset saved to {DATASET_FILE}")
+
+    print(f"Generated {len(df)} Q&A pairs")
+    return df
 
 """
 from src.vectorstore import load_vectorstore

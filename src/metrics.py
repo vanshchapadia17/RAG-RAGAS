@@ -1,4 +1,4 @@
-
+import re
 import numpy as np
 from typing import List,Dict,Any,Tuple
 from sklearn.metrics import ndcg_score
@@ -134,6 +134,28 @@ def run_all_retriever_metrics(
 
     return metrics
 
+def auto_keywords(questions):
+    """
+    Automatically extract keywords from questions.
+    No manual keyword definition needed.
+    Works for any document and any questions.
+    """
+    stopwords = {
+        'what', 'is', 'are', 'the', 'a', 'an', 'how',
+        'why', 'when', 'where', 'who', 'which', 'do',
+        'does', 'did', 'was', 'were', 'will', 'can',
+        'could', 'would', 'should', 'of', 'in', 'on',
+        'at', 'to', 'for', 'with', 'by', 'from', 'it',
+        'its', 'this', 'that', 'these', 'those', 'and',
+        'or', 'but', 'not', 'be', 'been', 'being', 'has',
+        'have', 'had', 'me', 'my', 'we', 'our', 'you'
+    }
+    keywords = []
+    for q in questions:
+        words = re.findall(r'\b\w+\b', q.lower())
+        kw = [w for w in words if w not in stopwords and len(w) > 2]
+        keywords.append(kw if kw else [words[0]])
+    return keywords
 
 """
 from src.vectorstore import load_vectorstore

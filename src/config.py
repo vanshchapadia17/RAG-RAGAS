@@ -33,6 +33,8 @@ OUTPUTS_DIR = os.path.join(BASE_DIR, "outputs")
 FAISS_DIR = os.path.join(BASE_DIR, "faiss_db")
 FEEDBACK_LOG = os.path.join(EVAL_DIR, "feedback_log.csv")
 SCORES_FILE = os.path.join(EVAL_DIR, "ragas_scores.json")
+DATASET_FILE = os.path.join(EVAL_DIR, "eval_dataset.csv")
+EVAL_DIR = os.path.join(BASE_DIR, "eval")
 
 QUALITY_GATES = {
     "faithfulness": 0.80,

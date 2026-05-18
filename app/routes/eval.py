@@ -9,6 +9,8 @@ from src.metrics import run_all_retriever_metrics
 from src.experiment_tracker import log_experiment, check_quality_gates
 from src.config import SCORES_FILE
 
+from src.metrics import run_all_retriever_metrics, auto_keywords
+
 eval_bp = Blueprint("eval", __name__)
 
 
@@ -42,7 +44,7 @@ def run_eval():
         )
         ragas_scores, df = run_ragas_evaluation(eval_data, save=True)
 
-        relevant_keywords = [[q.split()[0]] for q in questions]
+        relevant_keywords = auto_keywords(questions)
         retriever_metrics = run_all_retriever_metrics(
             questions, retriever, relevant_keywords
         )

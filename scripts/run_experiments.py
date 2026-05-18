@@ -1,43 +1,54 @@
 import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
+import pandas as pd
+from src.config import DATASET_FILE
 from src.vectorstore import load_vectorstore
 from src.retriever import get_retriever
 from src.rag_pipeline import build_rag_chain
-from src.document_processor import load_documents, recursive_chunking
 from src.evaluator import build_eval_data, run_ragas_evaluation
 from src.metrics import run_all_retriever_metrics
 from src.experiment_tracker import log_experiment
 from src.config import DATA_DIR
 
-# ── Your evaluation questions ──────────────────────────────
-QUESTIONS = [
-    "What is artificial intelligence?",
-    "What is machine learning?",
-    "What is a search algorithm?",
-    "What is a neural network?",
-    "What is natural language processing?",
-]
+from src.document_processor import (
+    load_documents,
+    recursive_chunking,
+    fixed_size_chunking,
+    semantic_chunking,
+    child_chunking
+)
 
-GROUND_TRUTHS = [
-    "AI is the study and design of intelligent agents",
-    "Machine learning is a subset of AI that learns from data",
-    "A search algorithm finds solutions by exploring possible states",
-    "A neural network is a computing system inspired by biological brains",
-    "NLP is a branch of AI that deals with human language",
-]
+from src.metrics import run_all_retriever_metrics, auto_keywords
 
-RELEVANT_KEYWORDS = [
-    ["artificial", "intelligence"],
-    ["machine", "learning"],
-    ["search", "algorithm"],
-    ["neural", "network"],
-    ["language", "processing"],
-]
+def get_chunks(docs, strategy="recursive"):
+    """Get chunks using specified strategy."""
+    if strategy == "fixed":
+        return fixed_size_chunking(docs)
+    elif strategy == "semantic":
+        return semantic_chunking(docs)
+    elif strategy == "child":
+        return child_chunking(docs)
+    else:
+        return recursive_chunking(docs)
+
+def load_eval_dataset():
+    if not os.path.exists(DATASET_FILE):
+        print("No dataset found!")
+        sys.exit(1)
+
+    df = pd.read_csv(DATASET_FILE)
+    
+    # Start with first 10 questions only for testing
+    df = df.head(10)
+    
+    questions = df["question"].tolist()
+    ground_truths = df["ground_truth"].tolist()
+    print(f"Loaded {len(questions)} questions from dataset")
+    return questions, ground_truths
 
 
-def run_single_experiment(name, strategy, vs, all_chunks):
+def run_single_experiment(name, strategy, vs, all_chunks, questions, ground_truths):
     print(f"\n{'='*50}")
     print(f"Running: {name}")
     print(f"{'='*50}")
@@ -48,19 +59,20 @@ def run_single_experiment(name, strategy, vs, all_chunks):
     rag_chain = build_rag_chain(retriever)
 
     eval_data = build_eval_data(
-        QUESTIONS, retriever, rag_chain, GROUND_TRUTHS
+        questions, retriever, rag_chain, ground_truths
     )
     ragas_scores, _ = run_ragas_evaluation(eval_data, save=False)
 
+    relevant_keywords = auto_keywords(questions)
     retriever_metrics = run_all_retriever_metrics(
-        QUESTIONS, retriever, RELEVANT_KEYWORDS
+        questions, retriever, relevant_keywords
     )
 
     config = {
         "retriever_strategy": strategy,
         "chunk_size": 512,
         "embedding_model": "MiniLM",
-        "num_questions": len(QUESTIONS),
+        "num_questions": len(questions),
     }
 
     log_experiment(name, config, ragas_scores, retriever_metrics)
@@ -69,6 +81,9 @@ def run_single_experiment(name, strategy, vs, all_chunks):
 
 
 def main():
+    # Load auto generated dataset
+    QUESTIONS, GROUND_TRUTHS = load_eval_dataset()
+
     print("Loading vectorstore...")
     vs = load_vectorstore()
 
@@ -77,16 +92,14 @@ def main():
     all_chunks = recursive_chunking(docs)
 
     experiments = [
-        ("exp1-basic-baseline", "basic"),
-        ("exp2-hybrid-search", "hybrid"),
-        ("exp3-reranker-vector", "reranker_vector"),
-        ("exp4-reranker-hybrid", "reranker_hybrid"),
+    ("exp1-basic-baseline", "basic"),
+    ("exp2-reranker-hybrid", "reranker_hybrid"),
     ]
 
     results = {}
     for name, strategy in experiments:
         results[name] = run_single_experiment(
-            name, strategy, vs, all_chunks
+            name, strategy, vs, all_chunks, QUESTIONS, GROUND_TRUTHS
         )
 
     print("\n\n══ Final Comparison ══")
